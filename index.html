@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>200 DAYS TRIVIA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kittyPink: '#FFD1DC',
+                        kittySoftPink: '#FFF0F5',
+                        kittyDarkPink: '#FF69B4',
+                        kittyRed: '#FF4D6D',
+                        kittyAccent: '#FF85A1',
+                        kittyCream: '#FFFDF9',
+                    },
+                    fontFamily: {
+                        pacifico: ['Pacifico', 'cursive'],
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'cute': '0 8px 25px -5px rgba(255, 105, 180, 0.3), 0 8px 10px -6px rgba(255, 105, 180, 0.2)',
+                        'cute-hover': '0 12px 30px -5px rgba(255, 77, 109, 0.4), 0 10px 12px -6px rgba(255, 77, 109, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #FFF0F5;
+            background-image: radial-gradient(#FFD1DC 1.5px, transparent 1.5px), radial-gradient(#FFD1DC 1.5px, #FFF0F5 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            overflow-x: hidden;
+        }
+
+        .floating-heart {
+            position: fixed;
+            color: rgba(255, 133, 161, 0.4);
+            animation: floatUp 8s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) scale(0.5) rotate(0deg);
+                opacity: 0;
+            }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% {
+                transform: translateY(-10vh) scale(1.2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .envelope-wrapper {
+            perspective: 1000px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-gray-800 relative select-none">
+
+    <div id="floatingHeartsContainer"></div>
+
+    <main class="container mx-auto px-4 py-8 max-w-2xl relative z-10 flex-grow flex items-center justify-center">
+
+        <!-- SCREEN 1: Trivia Game Screen -->
+        <div id="gameScreen" class="w-full bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 border-4 border-kittyPink shadow-cute transition-all duration-300">
+            
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2 font-fredoka text-kittyDarkPink font-semibold">
+                    <span id="questionProgressText">Question 1 of 20</span>
+                    <span id="scoreText" class="bg-kittyPink/40 px-3 py-1 rounded-full text-xs md:text-sm">Score: 0 ❤️</span>
+                </div>
+                <div class="w-full bg-kittySoftPink h-4 rounded-full overflow-hidden border border-kittyPink p-0.5 relative">
+                    <div id="progressBar" class="bg-gradient-to-r from-kittyAccent to-kittyRed h-full rounded-full transition-all duration-500" style="width: 5%;"></div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <div class="inline-block bg-kittyPink/30 text-kittyRed font-fredoka px-3 py-1 rounded-full text-xs font-bold mb-2">
+                    <i class="fa-solid fa-sparkles mr-1"></i> Written Trivia
+                </div>
+                <h3 id="questionText" class="font-fredoka text-xl md:text-2xl text-gray-800 font-bold leading-snug">
+                    Loading question...
+                </h3>
+            </div>
+
+            <!-- Input Box for Written Answer -->
+            <div class="mb-6">
+                <input type="text" id="answerInput" placeholder="Type your answer here..." autocomplete="off" onkeypress="handleKeyPress(event)" class="w-full p-4 rounded-2xl border-2 border-kittyPink bg-kittyCream focus:outline-none focus:border-kittyRed font-bold font-fredoka text-gray-800 transition-all text-lg shadow-sm" />
+            </div>
+
+            <!-- Image Container (Used for Q18 Crying Hamster meme) -->
+            <div id="imageDisplayContainer" class="hidden mb-4 flex justify-center">
+                <img id="customMemeImage" src="" alt="Meme Reaction" class="max-h-56 rounded-2xl border-4 border-kittyPink shadow-md object-contain" />
+            </div>
+
+            <!-- Feedback Message Bar -->
+            <div id="feedbackBox" class="min-h-[50px] mb-4 flex items-center justify-center p-3 rounded-2xl text-center font-bold font-fredoka text-sm md:text-base hidden transition-all">
+            </div>
+
+            <!-- Buttons Grid -->
+            <div class="flex gap-3">
+                <button id="submitBtn" onclick="submitAnswer()" class="flex-1 py-3.5 bg-gradient-to-r from-kittyAccent to-kittyRed text-white rounded-2xl font-fredoka text-lg font-bold shadow-cute hover:shadow-cute-hover transition-all">
+                    Submit Answer
+                </button>
+                <button id="nextBtn" onclick="nextQuestion()" class="hidden flex-1 py-3.5 bg-gradient-to-r from-kittyAccent to-kittyRed text-white rounded-2xl font-fredoka text-lg font-bold shadow-cute hover:shadow-cute-hover transition-all flex items-center justify-center gap-2">
+                    <span>Next</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: Love Letter Screen (Revealed ONLY after Question 20) -->
+        <div id="surpriseScreen" class="w-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-10 border-4 border-kittyRed shadow-cute-hover hidden transition-all duration-500 text-center">
+            
+            <div class="inline-block bg-kittyRed text-white px-4 py-1.5 rounded-full font-fredoka text-sm font-bold mb-3 shadow-sm animate-pulse">
+                MABROOK BABYYYY
+            </div>
+
+            <h2 class="font-pacifico text-3xl md:text-4xl text-kittyRed mb-2">
+                U FINIAHEDDDDD
+            </h2>
+
+            <!-- Love Letter Area -->
+            <div class="envelope-wrapper my-6">
+                <div class="bg-gradient-to-b from-kittySoftPink to-kittyPink p-6 md:p-8 rounded-3xl border-4 border-kittyRed shadow-cute text-left space-y-4">
+                    <div class="flex justify-between items-center border-b-2 border-kittyRed/20 pb-2">
+                        <span class="font-pacifico text-kittyRed text-2xl">my baby, JUJUUU</span>
+                        <span class="text-2xl"></span>
+                    </div>
+                    
+                    <!-- Love Letter -->
+                    <p id="customLoveLetter" class="text-gray-700 text-base md:text-lg leading-relaxed font-medium">
+                       I LOVE YOU SOOOSSOSOSOS MUCH BABY IM SORRY IF IM ANNOYING SOMETIMES IK I ANNOY U ALOT BS ITS OKAY BABY I ADORE YOU I REAALLYYY LOVEE YOUUUU MN MY WHOLEEEE HEARTTT AND I WANT U MINE FOREVERRRR  PLS DONT EVER BE MAD AT ME AGAIN BABY I LOVE YOU SOOOOOOOOOOOOO MUCHHHH AND I REALLY LOVEEEE EVERYTH ABT  U MY BABY UR LIKE SOPRETY AND INTELLIGENT AND SMART UR LIKE WOW BABYYYY IM REALLY PROUD OF U FOR STUDYING SO GOOD AND IK YOU'LL GET A* IN ALLLL SUBJECTS BABYYY, I HOPE U LIKED THIS PARA ILOVEYOUOSOSOSOSO MUCHHH PLSSS DONT EVER BE MAD AT ME EVER AGAIN AND MABROOKKKKKKKKKK 200 DAYS BABYYYYYYYY
+                    </p>
+
+                    <div class="text-right font-pacifico text-kittyRed text-xl pt-2">
+                        Forever Yours 💕
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full py-3.5 bg-kittySoftPink text-kittyRed border-2 border-kittyPink rounded-2xl font-fredoka text-base font-bold hover:bg-kittyPink/50 transition-all">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Play Again
+            </button>
+        </div>
+
+    </main>
+
+    <script>
+        const triviaQuestions = [
+            { id: 1, question: "when did we confess", validate: (a) => normalize(a) === "march 18th 2026" || normalize(a) === "march 18 2026" || normalize(a) === "18 march 2026" || normalize(a) === "18th march 2026", expected: "march 18th 2026" },
+            { id: 2, question: "what was our first promise", validate: (a) => normalize(a).includes("canes") && normalize(a).includes("makeup"), expected: "canes and makeup" },
+            { id: 3, question: "whats ur fav thing abt me?", validate: (a) => a.trim().length > 0, expected: "any sweet answer!" },
+            { id: 4, question: "whats my fav thing abt u", validate: (a) => normalize(a) === "everything", expected: "everything" },
+            { id: 5, question: "what does mazen do when juju studies?", validate: (a) => normalize(a) === "play ps" || normalize(a) === "plays ps" || normalize(a) === "playps", expected: "play ps" },
+            { id: 6, question: "whats mazen's fav food", validate: (a) => normalize(a) === "sushi" || normalize(a) === "pizza", expected: "sushi (or pizza)" },
+            { id: 7, question: "whats mazen's fav color?", validate: (a) => normalize(a) === "black", expected: "black" },
+            { id: 8, question: "whats mazen's fav subject", validate: (a) => normalize(a) === "math", expected: "math" },
+            { id: 9, question: "what does mazen want to be when he grows up", validate: (a) => normalize(a) === "engineer" || normalize(a) === "an engineer", expected: "engineer" },
+            { id: 10, question: "what will we name our kids.", validate: (a) => normalize(a).includes("maya") && normalize(a).includes("zayn"), expected: "maya and zayn" },
+            { id: 11, question: "do u get jealous?", validate: (a) => normalize(a) === "yes", expected: "yes" },
+            { id: 12, question: "does mazen get jealous", validate: (a) => normalize(a).includes("yes"), expected: "yes" },
+            { id: 13, question: "where does mazen live in kw", validate: (a) => normalize(a) === "salwa block 12" || normalize(a) === "salwablock12", expected: "salwa block 12" },
+            { id: 14, question: "who does mazen hate the most", validate: (a) => normalize(a).includes("bbsf"), expected: "bbsf" },
+            { id: 15, question: "do u wanna get married", validate: (a) => normalize(a) === "yes", expected: "yes" },
+            { id: 16, question: "do u wanna end", validate: (a) => normalize(a) === "no", expected: "no" },
+            { id: 17, question: "can we cuddle", validate: (a) => normalize(a) === "yes", expected: "yes" },
+            { id: 18, question: "me or ur bbsf", validate: (a) => normalize(a) === "you" || normalize(a) === "u", expected: "you", isHamsterQ: true },
+            { id: 19, question: "do u love me", validate: (a) => normalize(a) === "yes", expected: "yes" },
+            { id: 20, question: "say i love you", validate: (a) => normalize(a) === "i love you" || normalize(a) === "iloveyou", expected: "i love you" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isSubmitted = false;
+
+        function normalize(str) {
+            return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function generateFloatingHearts() {
+            const container = document.getElementById('floatingHeartsContainer');
+            const heartIcons = ['💖', '💕', '💗'];
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-xl md:text-2xl';
+                heart.innerText = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+                heart.style.left = `${Math.random() * 95}vw`;
+                heart.style.animationDuration = `${6 + Math.random() * 6}s`;
+                heart.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(heart);
+            }
+        }
+
+        function renderQuestion() {
+            isSubmitted = false;
+            const q = triviaQuestions[currentQuestionIndex];
+
+            document.getElementById('questionProgressText').innerText = `Question ${currentQuestionIndex + 1} of 20`;
+            document.getElementById('scoreText').innerText = `Score: ${score} ❤️`;
+            document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / 20) * 100}%`;
+
+            document.getElementById('questionText').innerText = q.question;
+
+            const input = document.getElementById('answerInput');
+            input.value = '';
+            input.disabled = false;
+            input.focus();
+
+            document.getElementById('imageDisplayContainer').classList.add('hidden');
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.className = "min-h-[50px] mb-4 flex items-center justify-center p-3 rounded-2xl text-center font-bold font-fredoka text-sm md:text-base hidden transition-all";
+
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+        }
+
+        function submitAnswer() {
+            if (isSubmitted) return;
+
+            const q = triviaQuestions[currentQuestionIndex];
+            const input = document.getElementById('answerInput');
+            const rawVal = input.value;
+            const feedbackBox = document.getElementById('feedbackBox');
+            const imageContainer = document.getElementById('imageDisplayContainer');
+            const customMemeImage = document.getElementById('customMemeImage');
+
+            if (!rawVal.trim()) {
+                feedbackBox.innerHTML = "put answer here";
+                feedbackBox.className = "min-h-[50px] mb-4 flex items-center justify-center p-3 rounded-2xl text-center font-bold font-fredoka text-sm md:text-base bg-kittySoftPink text-kittyRed border border-kittyPink block";
+                return;
+            }
+
+            isSubmitted = true;
+            input.disabled = true;
+
+            const isCorrect = q.validate(rawVal);
+
+            if (isCorrect) {
+                score++;
+                feedbackBox.innerHTML = "YAYAYAYAYAYAYYA";
+                feedbackBox.className = "min-h-[50px] mb-4 flex items-center justify-center p-3 rounded-2xl text-center font-bold font-fredoka text-sm md:text-base bg-green-100 text-green-700 border border-green-300 block";
+            } else {
+                if (q.isHamsterQ) {
+                    customMemeImage.src = "https://www.tiktok.com/@headcanons.and.mo/photo/7547184456331808014?image_index=1";
+                    imageContainer.classList.remove('hidden');
+                }
+                feedbackBox.innerHTML = `i thought you'll say ${q.expected}`;
+                feedbackBox.className = "min-h-[50px] mb-4 flex items-center justify-center p-3 rounded-2xl text-center font-bold font-fredoka text-sm md:text-base bg-kittySoftPink text-kittyRed border border-kittyPink block";
+            }
+
+            document.getElementById('scoreText').innerText = `Score: ${score} ❤️`;
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                if (!isSubmitted) {
+                    submitAnswer();
+                } else {
+                    nextQuestion();
+                }
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < triviaQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showLoveLetterScreen();
+            }
+        }
+
+        function showLoveLetterScreen() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('surpriseScreen').classList.remove('hidden');
+            triggerConfetti();
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FF4D6D', '#FF85A1', '#FFD1DC', '#FFF0F5']
+                });
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('surpriseScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            renderQuestion();
+        }
+
+        window.onload = function() {
+            generateFloatingHearts();
+            renderQuestion();
+        };
+    </script>
+</body>
+</html>
